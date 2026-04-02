@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Gaeming</title>
+<link rel="icon" href="gaeming.ico" type="image/x-icon">
+
+<meta property="og:title" content="gaeming">
+<meta property="og:description" content="we are gaeming">
+<meta property="og:type" content="website">
+<meta property="og:image" content="gaeming.png">
+
+<style>
+    body { margin: 0; overflow: hidden; }
+    canvas { display: block; }
+
+    /* Crosshair */
+    #crosshair {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        width: 20px;
+        height: 20px;
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+        z-index: 999;
+    }
+
+    #crosshair::before,
+    #crosshair::after {
+        content: "";
+        position: absolute;
+        background: black;
+    }
+
+    /* Vertical line */
+    #crosshair::before {
+        width: 2px;
+        height: 20px;
+        left: 50%;
+        top: 0;
+        transform: translateX(-50%);
+    }
+
+    /* Horizontal line */
+    #crosshair::after {
+        height: 2px;
+        width: 20px;
+        top: 50%;
+        left: 0;
+        transform: translateY(-50%);
+    }
+</style>
+</head>
+
+<body>
+<div id="app"></div>
+<div id="crosshair"></div>
+
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.module.js';
+import Stats from 'https://cdn.jsdelivr.net/npm/three@0.155.0/examples/jsm/libs/stats.module.js';
+
+const width = window.innerWidth;
+const height = window.innerHeight;
+
+// Scene
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x87ceeb);
+
+// Map
+const mapWidth = 50;
+const mapDepth = 50;
+
+// Camera
+const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+camera.position.set(mapWidth/2, 3, mapDepth/2 + 5);
+
+// Renderer
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(width, height);
+document.querySelector('#app').appendChild(renderer.domElement);
+
+// Lights
+const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+dirLight.position.set(50, 100, 50);
+scene.add(dirLight);
+
+scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+
+// Blocks + grid
+const cubeMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+const gridMat = new THREE.LineBasicMaterial({ color: 0x000000 });
+
+for (let x = 0; x < mapWidth; x++) {
+    for (let z = 0; z < mapDepth; z++) {
+        const geo = new THREE.BoxGeometry(1, 1, 1);
+
+        const cube = new THREE.Mesh(geo, cubeMat);
+        cube.position.set(x, 0.5, z);
+        scene.add(cube);
+
+        const edges = new THREE.EdgesGeometry(geo);
+        const line = new THREE.LineSegments(edges, gridMat);
+        line.position.set(x, 0.5, z);
+        scene.add(line);
+    }
+}
+
+// Movement
+let keys = {};
+let yaw = 0, pitch = 0;
+let velocityY = 0;
+let isOnGround = true;
+
+let lastSafe = camera.position.clone();
+
+document.addEventListener('keydown', e => keys[e.code] = true);
+document.addEventListener('keyup', e => keys[e.code] = false);
+
+document.body.addEventListener('click', () => {
+    document.body.requestPointerLock();
+});
+
+document.addEventListener('mousemove', e => {
+    if (document.pointerLockElement) {
+        yaw -= e.movementX * 0.002;
+        pitch -= e.movementY * 0.002;
+        pitch = Math.max(-Math.PI/2, Math.min(Math.PI/2, pitch));
+        camera.rotation.set(pitch, yaw, 0, 'YXZ');
+    }
+});
+
+document.addEventListener('keydown', e => {
+    if (e.code === 'Space' && isOnGround) {
+        velocityY = 0.2;
+        isOnGround = false;
+    }
+});
+
+function move() {
+    const dir = new THREE.Vector3();
+
+    const forward = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
+    const side = new THREE.Vector3(Math.sin(yaw + Math.PI/2), 0, Math.cos(yaw + Math.PI/2));
+
+    if (keys['KeyW']) dir.add(forward);
+    if (keys['KeyS']) dir.sub(forward);
+    if (keys['KeyA']) dir.add(side);
+    if (keys['KeyD']) dir.sub(side);
+
+    dir.normalize().multiplyScalar(0.2);
+    camera.position.add(dir);
+
+    // Gravity
+    velocityY -= 0.01;
+    camera.position.y += velocityY;
+
+    if (camera.position.y <= 2) {
+        camera.position.y = 2;
+        velocityY = 0;
+        isOnGround = true;
+        lastSafe.copy(camera.position);
+    }
+
+    if (camera.position.y < -10) {
+        camera.position.copy(lastSafe);
+        velocityY = 0;
+    }
+}
+
+// FPS stats
+const stats = new Stats();
+document.body.appendChild(stats.dom);
+
+// Animate
+function animate() {
+    requestAnimationFrame(animate);
+
+    stats.begin();
+
+    move();
+    renderer.render(scene, camera);
+
+    stats.end();
+}
+animate();
+
+// Resize
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+</script>
+</body>
+</html>

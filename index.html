@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Gaeming</title>
-<link rel="icon" href="gaeming.ico" type="image/x-icon">
+<link rel="icon" href="gaeming.ico">
 
 <meta property="og:title" content="gaeming">
 <meta property="og:description" content="we are gaeming">
@@ -11,187 +11,214 @@
 <meta property="og:image" content="gaeming.png">
 
 <style>
-    body { margin: 0; overflow: hidden; }
-    canvas { display: block; }
+body { margin:0; overflow:hidden; cursor:none; }
 
-    /* Crosshair */
-    #crosshair {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        width: 20px;
-        height: 20px;
-        transform: translate(-50%, -50%);
-        pointer-events: none;
-        z-index: 999;
-    }
-
-    #crosshair::before,
-    #crosshair::after {
-        content: "";
-        position: absolute;
-        background: black;
-    }
-
-    /* Vertical line */
-    #crosshair::before {
-        width: 2px;
-        height: 20px;
-        left: 50%;
-        top: 0;
-        transform: translateX(-50%);
-    }
-
-    /* Horizontal line */
-    #crosshair::after {
-        height: 2px;
-        width: 20px;
-        top: 50%;
-        left: 0;
-        transform: translateY(-50%);
-    }
+/* Crosshair */
+#crosshair {
+    position: fixed;
+    top: 50%; left: 50%;
+    width: 20px; height: 20px;
+    transform: translate(-50%, -50%);
+}
+#crosshair::before, #crosshair::after {
+    content:""; position:absolute; background:black;
+}
+#crosshair::before { width:2px;height:20px;left:50%;transform:translateX(-50%);}
+#crosshair::after { height:2px;width:20px;top:50%;transform:translateY(-50%);}
 </style>
 </head>
 
 <body>
-<div id="app"></div>
 <div id="crosshair"></div>
 
 <script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.module.js';
 import Stats from 'https://cdn.jsdelivr.net/npm/three@0.155.0/examples/jsm/libs/stats.module.js';
 
-const width = window.innerWidth;
-const height = window.innerHeight;
-
-// Scene
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x87ceeb);
 
-// Map
-const mapWidth = 50;
-const mapDepth = 50;
+const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
+camera.position.set(25, 2, 30);
 
-// Camera
-const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
-camera.position.set(mapWidth/2, 3, mapDepth/2 + 5);
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
 
-// Renderer
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(width, height);
-document.querySelector('#app').appendChild(renderer.domElement);
+// FPS (bigger)
+const stats = new Stats();
+stats.dom.style.transform = "scale(1.5)";
+stats.dom.style.transformOrigin = "top left";
+document.body.appendChild(stats.dom);
 
 // Lights
-const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
-dirLight.position.set(50, 100, 50);
-scene.add(dirLight);
-
 scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+const light = new THREE.DirectionalLight(0xffffff, 1);
+light.position.set(50,100,50);
+scene.add(light);
 
-// Blocks + grid
-const cubeMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
-const gridMat = new THREE.LineBasicMaterial({ color: 0x000000 });
+// Materials
+const texture = new THREE.TextureLoader().load("default_block.png");
+const groundMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
+const placedMaterial = new THREE.MeshStandardMaterial({ map: texture });
 
-for (let x = 0; x < mapWidth; x++) {
-    for (let z = 0; z < mapDepth; z++) {
-        const geo = new THREE.BoxGeometry(1, 1, 1);
+// Block storage
+const blocks = [];
 
-        const cube = new THREE.Mesh(geo, cubeMat);
-        cube.position.set(x, 0.5, z);
-        scene.add(cube);
+// Add block function (WITH GRID)
+function addBlock(x,y,z,type="placed"){
+ const geo = new THREE.BoxGeometry(1,1,1);
+ const mat = (type === "ground") ? groundMaterial : placedMaterial;
 
-        const edges = new THREE.EdgesGeometry(geo);
-        const line = new THREE.LineSegments(edges, gridMat);
-        line.position.set(x, 0.5, z);
-        scene.add(line);
-    }
+ const cube = new THREE.Mesh(geo, mat);
+ cube.position.set(x, y+0.5, z);
+ scene.add(cube);
+ blocks.push(cube);
+
+ // ✅ GRID LINES (this is what was missing)
+ const edges = new THREE.EdgesGeometry(geo);
+ const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({color:0x000000}));
+ line.position.copy(cube.position);
+ scene.add(line);
+
+ // attach reference so we can remove grid too
+ cube.userData.edge = line;
+}
+
+// Remove block (ALSO removes grid)
+function removeBlock(block){
+ scene.remove(block);
+ if(block.userData.edge){
+   scene.remove(block.userData.edge);
+ }
+ blocks.splice(blocks.indexOf(block),1);
+}
+
+// Create ground
+for(let x=0;x<50;x++){
+ for(let z=0;z<50;z++){
+  addBlock(x,0,z,"ground");
+ }
 }
 
 // Movement
-let keys = {};
-let yaw = 0, pitch = 0;
-let velocityY = 0;
-let isOnGround = true;
+let keys={}, yaw=0, pitch=0;
+let velY=0, grounded=true;
+const playerHeight = 1.8;
 
-let lastSafe = camera.position.clone();
+document.addEventListener('keydown',e=>keys[e.code]=true);
+document.addEventListener('keyup',e=>keys[e.code]=false);
 
-document.addEventListener('keydown', e => keys[e.code] = true);
-document.addEventListener('keyup', e => keys[e.code] = false);
+// Disable right click menu
+document.addEventListener('contextmenu', e => e.preventDefault());
 
-document.body.addEventListener('click', () => {
-    document.body.requestPointerLock();
+document.body.onclick=()=>document.body.requestPointerLock();
+
+document.addEventListener('mousemove',e=>{
+ if(document.pointerLockElement){
+  yaw -= e.movementX*0.002;
+  pitch -= e.movementY*0.002;
+  pitch=Math.max(-Math.PI/2,Math.min(Math.PI/2,pitch));
+  camera.rotation.set(pitch,yaw,0,'YXZ');
+ }
 });
 
-document.addEventListener('mousemove', e => {
-    if (document.pointerLockElement) {
-        yaw -= e.movementX * 0.002;
-        pitch -= e.movementY * 0.002;
-        pitch = Math.max(-Math.PI/2, Math.min(Math.PI/2, pitch));
-        camera.rotation.set(pitch, yaw, 0, 'YXZ');
+// Jump
+document.addEventListener('keydown',e=>{
+ if(e.code==="Space" && grounded){
+  velY=0.2;
+  grounded=false;
+ }
+});
+
+// Raycaster
+const raycaster = new THREE.Raycaster();
+
+document.addEventListener('mousedown', (e) => {
+    raycaster.setFromCamera(new THREE.Vector2(0,0), camera);
+    const intersects = raycaster.intersectObjects(blocks);
+
+    if(intersects.length > 0){
+        const hit = intersects[0];
+        
+        if(e.button === 2){
+            removeBlock(hit.object);
+        }
+
+        if(e.button === 0){
+            const pos = hit.point.clone().add(hit.face.normal);
+            addBlock(
+                Math.floor(pos.x),
+                Math.floor(pos.y),
+                Math.floor(pos.z),
+                "placed"
+            );
+        }
     }
 });
 
-document.addEventListener('keydown', e => {
-    if (e.code === 'Space' && isOnGround) {
-        velocityY = 0.2;
-        isOnGround = false;
-    }
-});
+// Collision
+function isColliding(pos){
+ for(const b of blocks){
+  const dx = Math.abs(pos.x - b.position.x);
+  const dy = Math.abs(pos.y - b.position.y);
+  const dz = Math.abs(pos.z - b.position.z);
 
-function move() {
-    const dir = new THREE.Vector3();
-
-    const forward = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
-    const side = new THREE.Vector3(Math.sin(yaw + Math.PI/2), 0, Math.cos(yaw + Math.PI/2));
-
-    if (keys['KeyW']) dir.add(forward);
-    if (keys['KeyS']) dir.sub(forward);
-    if (keys['KeyA']) dir.add(side);
-    if (keys['KeyD']) dir.sub(side);
-
-    dir.normalize().multiplyScalar(0.2);
-    camera.position.add(dir);
-
-    // Gravity
-    velocityY -= 0.01;
-    camera.position.y += velocityY;
-
-    if (camera.position.y <= 2) {
-        camera.position.y = 2;
-        velocityY = 0;
-        isOnGround = true;
-        lastSafe.copy(camera.position);
-    }
-
-    if (camera.position.y < -10) {
-        camera.position.copy(lastSafe);
-        velocityY = 0;
-    }
+  if(dx < 0.5 && dz < 0.5 && dy < 1){
+    return true;
+  }
+ }
+ return false;
 }
 
-// FPS stats
-const stats = new Stats();
-document.body.appendChild(stats.dom);
+// Movement
+function move(){
+ const dir=new THREE.Vector3();
 
-// Animate
-function animate() {
-    requestAnimationFrame(animate);
+ const forward=new THREE.Vector3(Math.sin(yaw),0,-Math.cos(yaw));
+ const side=new THREE.Vector3(Math.sin(yaw+Math.PI/2),0,-Math.cos(yaw+Math.PI/2));
 
-    stats.begin();
+ if(keys["KeyW"]) dir.add(forward);
+ if(keys["KeyS"]) dir.sub(forward);
+ if(keys["KeyA"]) dir.add(side);
+ if(keys["KeyD"]) dir.sub(side);
 
-    move();
-    renderer.render(scene, camera);
+ dir.normalize().multiplyScalar(0.15);
 
-    stats.end();
+ const nextPos = camera.position.clone().add(dir);
+
+ if(!isColliding(nextPos)){
+  camera.position.add(dir);
+ }
+
+ // Gravity
+ velY -= 0.01;
+ camera.position.y += velY;
+
+ if(camera.position.y <= playerHeight){
+  camera.position.y = playerHeight;
+  velY = 0;
+  grounded = true;
+ }
+}
+
+// Loop
+function animate(){
+ requestAnimationFrame(animate);
+ stats.begin();
+
+ move();
+ renderer.render(scene,camera);
+
+ stats.end();
 }
 animate();
 
-// Resize
-window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-});
+window.onresize=()=>{
+ camera.aspect=innerWidth/innerHeight;
+ camera.updateProjectionMatrix();
+ renderer.setSize(innerWidth,innerHeight);
+};
 </script>
 </body>
 </html>

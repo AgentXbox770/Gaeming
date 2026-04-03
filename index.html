@@ -4,175 +4,81 @@
 <meta charset="UTF-8">
 <title>Gaeming</title>
 <link rel="icon" href="gaeming.ico">
-
 <meta property="og:title" content="gaeming">
 <meta property="og:description" content="we are gaeming">
 <meta property="og:type" content="website">
 <meta property="og:image" content="gaeming.png">
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 
 <style>
-    body { margin:0; overflow:hidden; font-family: 'Courier New', monospace; touch-action: none; }
-    
-    /* Crosshair - only visible on desktop, hidden on mobile via media query */
-    #crosshair {
-        position: fixed;
-        top: 50%; left: 50%;
-        width: 20px; height: 20px;
+body { margin:0; overflow:hidden; cursor:none; }
+#crosshair {
+    position: fixed;
+    top: 50%; left: 50%;
+    width: 20px; height: 20px;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 10;
+}
+#crosshair::before, #crosshair::after {
+    content:""; position:absolute; background:black;
+}
+#crosshair::before { width:2px;height:20px;left:50%;transform:translateX(-50%);}
+#crosshair::after { height:2px;width:20px;top:50%;transform:translateY(-50%);}
+
+@media (pointer: coarse) {
+    #crosshair { display: none; }
+    .mobile-controls { display: block; }
+    .joystick-container {
+        position: fixed; bottom: 80px; left: 80px;
+        width: 140px; height: 140px;
+        background: rgba(30,30,40,0.7); border-radius: 50%;
+        backdrop-filter: blur(8px); border: 2px solid rgba(255,255,255,0.3);
+        z-index: 20;
+    }
+    .joystick-thumb {
+        position: absolute; top: 50%; left: 50%;
+        width: 60px; height: 60px;
+        background: rgba(255,255,255,0.95); border-radius: 50%;
         transform: translate(-50%, -50%);
-        pointer-events: none;
-        z-index: 10;
     }
-    #crosshair::before, #crosshair::after {
-        content:""; position:absolute; background:black;
+    .jump-button {
+        position: fixed; bottom: 80px; right: 80px;
+        width: 80px; height: 80px;
+        background: rgba(40,40,60,0.85); border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        color: white; font-size: 28px; border: 2px solid rgba(255,255,255,0.4);
+        z-index: 20;
     }
-    #crosshair::before { width:2px;height:20px;left:50%;transform:translateX(-50%);}
-    #crosshair::after { height:2px;width:20px;top:50%;transform:translateY(-50%);}
-    
-    /* ===== MOBILE CONTROLS ===== */
-    /* Only visible on touch devices */
-    @media (pointer: coarse) {
-        #crosshair {
-            display: none; /* hide crosshair on mobile */
-        }
-        
-        .mobile-controls {
-            display: block;
-        }
-        
-        .joystick-container {
-            position: fixed;
-            bottom: 80px;
-            left: 80px;
-            width: 140px;
-            height: 140px;
-            background: rgba(30,30,40,0.65);
-            border-radius: 50%;
-            backdrop-filter: blur(8px);
-            border: 2px solid rgba(255,255,255,0.3);
-            box-shadow: 0 0 15px rgba(0,0,0,0.3);
-            touch-action: none;
-            z-index: 20;
-        }
-        
-        .joystick-base {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 140px;
-            height: 140px;
-            transform: translate(-50%, -50%);
-            border-radius: 50%;
-            background: rgba(0,0,0,0.2);
-        }
-        
-        .joystick-thumb {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 60px;
-            height: 60px;
-            background: rgba(255,255,255,0.9);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-            border: 1px solid rgba(255,255,255,0.5);
-            transition: transform 0.05s linear;
-            touch-action: none;
-        }
-        
-        .jump-button {
-            position: fixed;
-            bottom: 80px;
-            right: 80px;
-            width: 80px;
-            height: 80px;
-            background: rgba(40,40,60,0.85);
-            backdrop-filter: blur(8px);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: 28px;
-            font-family: monospace;
-            border: 2px solid rgba(255,255,255,0.4);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            touch-action: manipulation;
-            z-index: 20;
-            user-select: none;
-            cursor: pointer;
-        }
-        
-        .action-area {
-            position: fixed;
-            bottom: 200px;
-            right: 30px;
-            width: 100px;
-            height: 100px;
-            background: rgba(0,0,0,0);
-            border-radius: 50%;
-            touch-action: none;
-            z-index: 20;
-        }
-        
-        .action-hint {
-            position: fixed;
-            bottom: 190px;
-            right: 45px;
-            color: white;
-            font-size: 12px;
-            text-shadow: 1px 1px 0 black;
-            background: rgba(0,0,0,0.5);
-            padding: 4px 8px;
-            border-radius: 20px;
-            pointer-events: none;
-            font-family: monospace;
-            z-index: 21;
-        }
-        
-        .controls-label {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            color: white;
-            background: rgba(0,0,0,0.5);
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 10px;
-            font-family: monospace;
-            pointer-events: none;
-            z-index: 20;
-        }
+    .action-area {
+        position: fixed; bottom: 210px; right: 35px;
+        width: 90px; height: 90px; border-radius: 50%;
+        z-index: 20;
     }
-    
-    @media (pointer: fine) {
-        .mobile-controls {
-            display: none;
-        }
+    .action-hint {
+        position: fixed; bottom: 195px; right: 40px;
+        color: white; font-size: 10px;
+        background: rgba(0,0,0,0.6); padding: 4px 8px;
+        border-radius: 20px; white-space: nowrap;
     }
-    
-    .mobile-controls {
-        display: none;
+    .controls-label {
+        position: fixed; bottom: 20px; left: 20px;
+        color: white; background: rgba(0,0,0,0.5);
+        padding: 4px 10px; border-radius: 20px; font-size: 10px;
     }
+}
+.mobile-controls { display: none; }
 </style>
 </head>
 
 <body>
 <div id="crosshair"></div>
-
-<!-- Mobile UI (only visible on touch devices) -->
 <div class="mobile-controls">
-    <div class="joystick-container" id="joystickContainer">
-        <div class="joystick-base"></div>
-        <div class="joystick-thumb" id="joystickThumb"></div>
-    </div>
+    <div class="joystick-container" id="joystickContainer"><div class="joystick-thumb" id="joystickThumb"></div></div>
     <div class="jump-button" id="jumpButton">JUMP</div>
     <div class="action-area" id="actionArea"></div>
-    <div class="action-hint">⚡ TAP = PLACE<br>⏺ HOLD = BREAK</div>
-    <div class="controls-label">← MOVE  |  DRAG → LOOK</div>
+    <div class="action-hint">TAP=PLACE | HOLD=BREAK</div>
+    <div class="controls-label">MOVE | DRAG TO LOOK</div>
 </div>
 
 <script type="module">
@@ -181,37 +87,31 @@ import Stats from 'https://cdn.jsdelivr.net/npm/three@0.155.0/examples/jsm/libs/
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x87ceeb);
-
 const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
 camera.position.set(25, 2, 30);
-
 const renderer = new THREE.WebGLRenderer({antialias:true});
 renderer.setSize(innerWidth, innerHeight);
 document.body.appendChild(renderer.domElement);
 
-// FPS counter (unchanged)
 const stats = new Stats();
 stats.dom.style.transform = "scale(1.5)";
 stats.dom.style.transformOrigin = "top left";
 document.body.appendChild(stats.dom);
 
-// Lights
 scene.add(new THREE.AmbientLight(0xffffff, 0.6));
 const light = new THREE.DirectionalLight(0xffffff, 1);
 light.position.set(50,100,50);
 scene.add(light);
 
-// Materials
 const texture = new THREE.TextureLoader().load("default_block.png");
 const groundMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
 const placedMaterial = new THREE.MeshStandardMaterial({ map: texture });
 
-// Block storage
 const blocks = [];
 
 function addBlock(x,y,z,type="placed"){
     const geo = new THREE.BoxGeometry(1,1,1);
-    const mat = (type === "ground") ? groundMaterial : placedMaterial;
+    const mat = (type==="ground")?groundMaterial:placedMaterial;
     const cube = new THREE.Mesh(geo, mat);
     cube.position.set(x, y+0.5, z);
     scene.add(cube);
@@ -230,351 +130,187 @@ function removeBlock(block){
     if(idx !== -1) blocks.splice(idx,1);
 }
 
-// Ground
-for(let x=0;x<50;x++){
-    for(let z=0;z<50;z++){
-        addBlock(x,0,z,"ground");
-    }
-}
+for(let x=0;x<50;x++) for(let z=0;z<50;z++) addBlock(x,0,z,"ground");
 
-// ========== MOVEMENT & CAMERA STATE ==========
 let keys = { w: false, s: false, a: false, d: false };
 let yaw = 0, pitch = 0;
 let velY = 0, grounded = true;
 const playerHeight = 1.8;
 
-// Desktop keyboard controls (unchanged)
+// KEYDOWN
 document.addEventListener('keydown', e => {
     const code = e.code;
     if(code === 'KeyW') keys.w = true;
     if(code === 'KeyS') keys.s = true;
     if(code === 'KeyA') keys.a = true;
     if(code === 'KeyD') keys.d = true;
-    if(code === 'Space' && grounded) { velY = 0.2; grounded = false; }
+    if(code === 'Space' && grounded) { velY = 0.2; grounded = false; e.preventDefault(); }
 });
+
+// ✅ YOUR EXACT KEYUP MAPPING: W, A, S, D in that order
 document.addEventListener('keyup', e => {
     const code = e.code;
     if(code === 'KeyW') keys.w = false;
-    if(code === 'KeyS') keys.s = false;
     if(code === 'KeyA') keys.a = false;
+    if(code === 'KeyS') keys.s = false;
     if(code === 'KeyD') keys.d = false;
 });
 
-// Desktop mouse look
-let pointerLockActive = false;
-document.body.onclick = () => { if(!isMobileTouch()) document.body.requestPointerLock(); };
-document.addEventListener('mousemove', e => {
-    if(document.pointerLockElement || pointerLockActiveForDesktop()){
-        if(!isMobileTouch()){
-            yaw -= e.movementX * 0.002;
-            pitch -= e.movementY * 0.002;
-            pitch = Math.max(-Math.PI/2, Math.min(Math.PI/2, pitch));
-            camera.rotation.order = 'YXZ';
-            camera.rotation.set(pitch, yaw, 0);
-        }
-    }
-});
-function pointerLockActiveForDesktop() { return document.pointerLockElement && !isMobileTouch(); }
-
-// ========== MOBILE-SPECIFIC CONTROLS ==========
-function isMobileTouch() {
-    return ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-}
-
-let mobileJoystickVector = { x: 0, z: 0 };
-let cameraDragActive = false;
-let lastTouchX = 0, lastTouchY = 0;
-
-// Block interaction for mobile: tap = place, hold = break
-let breakHoldTimer = null;
-let isBreaking = false;
-let currentHitBlock = null;
-
-const raycaster = new THREE.Raycaster();
-const centerScreen = new THREE.Vector2(0, 0);
-
-function getBlockUnderCrosshair() {
-    raycaster.setFromCamera(centerScreen, camera);
-    const intersects = raycaster.intersectObjects(blocks);
-    if(intersects.length > 0) return intersects[0];
-    return null;
-}
-
-function performPlaceBlock() {
-    const hit = getBlockUnderCrosshair();
-    if(hit) {
-        const pos = hit.point.clone().add(hit.face.normal);
-        addBlock(Math.floor(pos.x), Math.floor(pos.y), Math.floor(pos.z), "placed");
-    }
-}
-
-function performBreakBlock() {
-    const hit = getBlockUnderCrosshair();
-    if(hit && hit.object) {
-        removeBlock(hit.object);
-    }
-}
-
-// Touch start for action area (place/break logic)
-const actionArea = document.getElementById('actionArea');
-if(actionArea) {
-    actionArea.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        // Start hold timer for breaking
-        if(breakHoldTimer) clearTimeout(breakHoldTimer);
-        isBreaking = false;
-        breakHoldTimer = setTimeout(() => {
-            // Long press = break mode
-            isBreaking = true;
-            performBreakBlock();
-            // Continuously break while holding
-            const interval = setInterval(() => {
-                if(isBreaking) {
-                    performBreakBlock();
-                } else {
-                    clearInterval(interval);
-                }
-            }, 100);
-        }, 300);
-    });
-    
-    actionArea.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        if(breakHoldTimer) {
-            clearTimeout(breakHoldTimer);
-            breakHoldTimer = null;
-        }
-        if(!isBreaking) {
-            // Short tap = place block
-            performPlaceBlock();
-        }
-        isBreaking = false;
-    });
-    
-    actionArea.addEventListener('touchcancel', (e) => {
-        if(breakHoldTimer) clearTimeout(breakHoldTimer);
-        isBreaking = false;
-    });
-}
-
-// Joystick logic
-const joystickContainer = document.getElementById('joystickContainer');
-const joystickThumb = document.getElementById('joystickThumb');
-let activeJoystick = false;
-let joystickCenter = { x: 0, y: 0 };
-let joystickRadius = 55;
-
-if(joystickContainer) {
-    joystickContainer.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        activeJoystick = true;
-        const rect = joystickContainer.getBoundingClientRect();
-        joystickCenter.x = rect.left + rect.width/2;
-        joystickCenter.y = rect.top + rect.height/2;
-        const touch = e.touches[0];
-        updateJoystick(touch.clientX, touch.clientY);
-    });
-    
-    const updateJoystick = (clientX, clientY) => {
-        if(!activeJoystick) return;
-        let dx = clientX - joystickCenter.x;
-        let dy = clientY - joystickCenter.y;
-        const distance = Math.sqrt(dx*dx + dy*dy);
-        let angle = Math.atan2(dy, dx);
-        let limitedDistance = Math.min(distance, joystickRadius);
-        let thumbX = Math.cos(angle) * limitedDistance;
-        let thumbY = Math.sin(angle) * limitedDistance;
-        joystickThumb.style.transform = `translate(calc(-50% + ${thumbX}px), calc(-50% + ${thumbY}px))`;
-        
-        // Normalize movement vector (x = horizontal, z = vertical relative to camera)
-        let rawX = dx / joystickRadius;
-        let rawZ = dy / joystickRadius;
-        rawX = Math.min(Math.max(rawX, -1), 1);
-        rawZ = Math.min(Math.max(rawZ, -1), 1);
-        mobileJoystickVector.x = rawX;
-        mobileJoystickVector.z = rawZ;
-    };
-    
-    joystickContainer.addEventListener('touchmove', (e) => {
-        e.preventDefault();
-        const touch = e.touches[0];
-        updateJoystick(touch.clientX, touch.clientY);
-    });
-    
-    joystickContainer.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        activeJoystick = false;
-        joystickThumb.style.transform = 'translate(-50%, -50%)';
-        mobileJoystickVector.x = 0;
-        mobileJoystickVector.z = 0;
-    });
-}
-
-// Jump button for mobile
-const jumpBtn = document.getElementById('jumpButton');
-if(jumpBtn) {
-    jumpBtn.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        if(grounded) {
-            velY = 0.2;
-            grounded = false;
-        }
-    });
-}
-
-// Camera drag to look (mobile)
-const canvasEl = renderer.domElement;
-let dragLookActive = false;
-
-canvasEl.addEventListener('touchstart', (e) => {
-    // Only if not touching UI buttons (joystick, jump, action)
-    const target = e.target;
-    const isUIControl = target.closest('.joystick-container') || target.closest('.jump-button') || target.closest('.action-area');
-    if(!isUIControl && e.touches.length === 1) {
-        e.preventDefault();
-        dragLookActive = true;
-        lastTouchX = e.touches[0].clientX;
-        lastTouchY = e.touches[0].clientY;
-    }
-});
-
-canvasEl.addEventListener('touchmove', (e) => {
-    if(dragLookActive && e.touches.length === 1) {
-        e.preventDefault();
-        const dx = e.touches[0].clientX - lastTouchX;
-        const dy = e.touches[0].clientY - lastTouchY;
-        if(dx !== 0 || dy !== 0) {
-            yaw -= dx * 0.008;
-            pitch -= dy * 0.008;
-            pitch = Math.max(-Math.PI/2 + 0.01, Math.min(Math.PI/2 - 0.01, pitch));
-            camera.rotation.order = 'YXZ';
-            camera.rotation.set(pitch, yaw, 0);
-        }
-        lastTouchX = e.touches[0].clientX;
-        lastTouchY = e.touches[0].clientY;
-    }
-});
-
-canvasEl.addEventListener('touchend', (e) => {
-    dragLookActive = false;
-});
-
-// Disable context menu on canvas
-canvasEl.addEventListener('contextmenu', (e) => e.preventDefault());
-
-// ========== MOVEMENT FUNCTION (unified) ==========
-function move() {
-    let moveX = 0, moveZ = 0;
-    
-    if(isMobileTouch()) {
-        // Mobile joystick input
-        moveX = mobileJoystickVector.x;
-        moveZ = mobileJoystickVector.z;
-    } else {
-        // Desktop keyboard
-        if(keys.w) moveZ -= 1;
-        if(keys.s) moveZ += 1;
-        if(keys.a) moveX -= 1;
-        if(keys.d) moveX += 1;
-        // Normalize diagonal
-        if(moveX !== 0 || moveZ !== 0) {
-            const len = Math.hypot(moveX, moveZ);
-            moveX /= len;
-            moveZ /= len;
-        }
-    }
-    
-    // Apply movement relative to camera yaw
-    const forward = new THREE.Vector3(Math.sin(yaw), 0, -Math.cos(yaw));
-    const right = new THREE.Vector3(Math.sin(yaw + Math.PI/2), 0, -Math.cos(yaw + Math.PI/2));
-    let moveVec = new THREE.Vector3(0,0,0);
-    if(moveZ !== 0) moveVec.addScaledVector(forward, moveZ);
-    if(moveX !== 0) moveVec.addScaledVector(right, moveX);
-    moveVec.multiplyScalar(0.15);
-    
-    const newPos = camera.position.clone().add(moveVec);
-    if(!isColliding(newPos)) {
-        camera.position.add(moveVec);
-    }
-    
-    // Gravity & jumping
-    velY -= 0.01;
-    camera.position.y += velY;
-    if(camera.position.y <= playerHeight) {
-        camera.position.y = playerHeight;
-        velY = 0;
-        grounded = true;
-    } else {
-        grounded = false;
-    }
-}
-
-function isColliding(pos) {
-    for(const b of blocks){
-        const dx = Math.abs(pos.x - b.position.x);
-        const dy = Math.abs(pos.y - b.position.y);
-        const dz = Math.abs(pos.z - b.position.z);
-        if(dx < 0.5 && dz < 0.5 && dy < 1) return true;
-    }
-    return false;
-}
-
-// ========== DESKTOP BLOCK PLACE/BREAK (original style with right/left click) ==========
-document.addEventListener('mousedown', (e) => {
-    if(isMobileTouch()) return; // mobile handles via custom UI
-    
-    if(!document.pointerLockElement) return;
-    raycaster.setFromCamera(centerScreen, camera);
-    const intersects = raycaster.intersectObjects(blocks);
-    if(intersects.length === 0) return;
-    const hit = intersects[0];
-    if(e.button === 2) { // right click = break
-        removeBlock(hit.object);
-        e.preventDefault();
-    }
-    if(e.button === 0) { // left click = place
-        const pos = hit.point.clone().add(hit.face.normal);
-        addBlock(Math.floor(pos.x), Math.floor(pos.y), Math.floor(pos.z), "placed");
-    }
-});
-
-// Desktop pointer lock / movement (existing)
 document.addEventListener('contextmenu', e => e.preventDefault());
 
-// Handle pointer lock for desktop
+function isMobileTouch(){ return ('ontouchstart' in window) || navigator.maxTouchPoints > 0; }
+
 document.body.addEventListener('click', () => {
-    if(!isMobileTouch() && !document.pointerLockElement) {
-        document.body.requestPointerLock();
+    if(!isMobileTouch() && !document.pointerLockElement) document.body.requestPointerLock();
+});
+
+document.addEventListener('mousemove', e => {
+    if(document.pointerLockElement && !isMobileTouch()){
+        yaw -= e.movementX * 0.002;
+        pitch -= e.movementY * 0.002;
+        pitch = Math.max(-Math.PI/2, Math.min(Math.PI/2, pitch));
+        camera.rotation.order = 'YXZ';
+        camera.rotation.set(pitch, yaw, 0);
     }
 });
 
-// ========== ANIMATION LOOP ==========
-function animate() {
+// MOBILE
+let mobileMoveX=0, mobileMoveZ=0, dragActive=false, lastX=0, lastY=0;
+const joystickDiv = document.getElementById('joystickContainer');
+const thumbDiv = document.getElementById('joystickThumb');
+let joyActive=false, joyCenter={x:0,y:0};
+if(joystickDiv){
+    joystickDiv.addEventListener('touchstart',e=>{
+        e.preventDefault(); joyActive=true;
+        const rect=joystickDiv.getBoundingClientRect();
+        joyCenter.x=rect.left+rect.width/2; joyCenter.y=rect.top+rect.height/2;
+        const update=(cx,cy)=>{
+            if(!joyActive) return;
+            let dx=cx-joyCenter.x, dy=cy-joyCenter.y;
+            const dist=Math.min(Math.hypot(dx,dy),55);
+            const angle=Math.atan2(dy,dx);
+            thumbDiv.style.transform=`translate(calc(-50% + ${Math.cos(angle)*dist}px), calc(-50% + ${Math.sin(angle)*dist}px))`;
+            mobileMoveX=dx/55; mobileMoveZ=dy/55;
+            if(mobileMoveX>1) mobileMoveX=1; if(mobileMoveX<-1) mobileMoveX=-1;
+            if(mobileMoveZ>1) mobileMoveZ=1; if(mobileMoveZ<-1) mobileMoveZ=-1;
+        };
+        update(e.touches[0].clientX, e.touches[0].clientY);
+        joystickDiv.addEventListener('touchmove', e2=>{ e2.preventDefault(); update(e2.touches[0].clientX, e2.touches[0].clientY); });
+        joystickDiv.addEventListener('touchend', ()=>{ joyActive=false; thumbDiv.style.transform='translate(-50%, -50%)'; mobileMoveX=0; mobileMoveZ=0; });
+    });
+}
+
+document.getElementById('jumpButton')?.addEventListener('touchstart',e=>{ e.preventDefault(); if(grounded){ velY=0.2; grounded=false; } });
+
+const canvasEl = renderer.domElement;
+canvasEl.addEventListener('touchstart',e=>{
+    const t=e.target;
+    if(!t.closest('.joystick-container') && !t.closest('.jump-button') && !t.closest('.action-area') && e.touches.length===1){
+        e.preventDefault(); dragActive=true; lastX=e.touches[0].clientX; lastY=e.touches[0].clientY;
+    }
+});
+canvasEl.addEventListener('touchmove',e=>{
+    if(dragActive && e.touches.length===1){
+        e.preventDefault();
+        const dx=e.touches[0].clientX-lastX, dy=e.touches[0].clientY-lastY;
+        yaw-=dx*0.008; pitch-=dy*0.008;
+        pitch=Math.max(-Math.PI/2+0.01, Math.min(Math.PI/2-0.01, pitch));
+        camera.rotation.order='YXZ'; camera.rotation.set(pitch,yaw,0);
+        lastX=e.touches[0].clientX; lastY=e.touches[0].clientY;
+    }
+});
+canvasEl.addEventListener('touchend',()=>{ dragActive=false; });
+
+const action = document.getElementById('actionArea');
+let breakTimer=null, isBreaking=false, breakInt=null;
+const ray=new THREE.Raycaster();
+const center=new THREE.Vector2(0,0);
+function getHit(){ ray.setFromCamera(center,camera); const i=ray.intersectObjects(blocks); return i.length?i[0]:null; }
+function place(){ const h=getHit(); if(h){ const p=h.point.clone().add(h.face.normal); addBlock(Math.floor(p.x),Math.floor(p.y),Math.floor(p.z),"placed"); } }
+function breakBlock(){ const h=getHit(); if(h&&h.object) removeBlock(h.object); }
+if(action){
+    action.addEventListener('touchstart',e=>{
+        e.preventDefault();
+        breakTimer=setTimeout(()=>{
+            isBreaking=true; breakBlock();
+            breakInt=setInterval(()=>{ if(isBreaking) breakBlock(); else clearInterval(breakInt); },100);
+        },300);
+    });
+    action.addEventListener('touchend',e=>{
+        e.preventDefault();
+        if(breakTimer){ clearTimeout(breakTimer); breakTimer=null; }
+        if(!isBreaking) place();
+        isBreaking=false;
+        if(breakInt){ clearInterval(breakInt); breakInt=null; }
+    });
+}
+
+function move(){
+    let mx=0, mz=0;
+    if(isMobileTouch()){ mx=mobileMoveX; mz=mobileMoveZ; }
+    else{
+        if(keys.w) mz-=1;
+        if(keys.s) mz+=1;
+        if(keys.a) mx-=1;
+        if(keys.d) mx+=1;
+        if(mx!==0 || mz!==0){ const l=Math.hypot(mx,mz); mx/=l; mz/=l; }
+    }
+    const forward=new THREE.Vector3(Math.sin(yaw),0,-Math.cos(yaw));
+    const right=new THREE.Vector3(Math.sin(yaw+Math.PI/2),0,-Math.cos(yaw+Math.PI/2));
+    const vec=new THREE.Vector3(0,0,0);
+    if(mz!==0) vec.addScaledVector(forward,mz);
+    if(mx!==0) vec.addScaledVector(right,mx);
+    vec.multiplyScalar(0.15);
+    const newPos=camera.position.clone().add(vec);
+    let colliding=false;
+    for(const b of blocks){
+        const dx=Math.abs(newPos.x-b.position.x);
+        const dy=Math.abs(newPos.y-b.position.y);
+        const dz=Math.abs(newPos.z-b.position.z);
+        if(dx<0.5 && dz<0.5 && dy<1){ colliding=true; break; }
+    }
+    if(!colliding) camera.position.add(vec);
+    velY-=0.01;
+    camera.position.y+=velY;
+    if(camera.position.y<=playerHeight){
+        camera.position.y=playerHeight;
+        velY=0;
+        grounded=true;
+    }else{ grounded=false; }
+}
+
+// Desktop block placement
+document.addEventListener('mousedown', e => {
+    if(isMobileTouch()) return;
+    if(!document.pointerLockElement) return;
+    ray.setFromCamera(center,camera);
+    const intersects = ray.intersectObjects(blocks);
+    if(intersects.length===0) return;
+    const hit = intersects[0];
+    if(e.button===2){
+        removeBlock(hit.object);
+        e.preventDefault();
+    }
+    if(e.button===0){
+        const pos = hit.point.clone().add(hit.face.normal);
+        addBlock(Math.floor(pos.x), Math.floor(pos.y), Math.floor(pos.z), "placed");
+    }
+});
+
+function animate(){
     requestAnimationFrame(animate);
     stats.begin();
     move();
-    renderer.render(scene, camera);
+    renderer.render(scene,camera);
     stats.end();
 }
 animate();
 
 window.onresize = () => {
-    camera.aspect = innerWidth / innerHeight;
+    camera.aspect = innerWidth/innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(innerWidth, innerHeight);
 };
-
-// Small helper to ensure desktop cursor lock works cleanly
-document.addEventListener('pointerlockchange', () => {
-    if(document.pointerLockElement) {
-        pointerLockActive = true;
-    } else {
-        pointerLockActive = false;
-    }
-});
-
-// Final: ensure no conflicts between mobile and desktop
-console.log("Game ready — mobile: " + isMobileTouch());
 </script>
 </body>
 </html>
